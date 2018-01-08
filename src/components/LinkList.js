@@ -4,6 +4,11 @@ import { graphql } from 'react-apollo'
 import gql from 'graphql-tag'
 
 class LinkList extends Component {
+  componentDidMount() {
+    this._subscribeToNewLinks()
+    this._subscribeToNewVotes()
+  }
+
   render() {
     if (this.props.allLinksQuery && this.props.allLinksQuery.loading) {
       return <div>Loading</div>
@@ -27,6 +32,94 @@ class LinkList extends Component {
         ))}
       </div>
     )
+  }
+
+  _subscribeToNewLinks = () => {
+    this.props.allLinksQuery.subscribeToMore({
+      document: gql`
+        subscription {
+          Link(filter: {
+            mutation_in: [CREATED]
+          }) {
+            node {
+              id
+              url
+              description
+              createdAt
+              postedBy {
+                id
+                name
+              }
+              votes {
+                id
+                user {
+                  id
+                }
+              }
+            }
+          }
+        }
+      `,
+      updateQuery: (previous, { subscriptionData }) => {
+        const newAllLinks = [
+          subscriptionData.data.Link.node,
+          ...previous.allLinks
+        ]
+        const result = {
+          ...previous,
+          allLinks: newAllLinks
+        }
+        return result
+      }
+    })
+  }
+
+  _subscribeToNewVotes = () => {
+    this.props.allLinksQuery.subscribeToMore({
+      document: gql`
+        subscription {
+          Vote(filter: {
+            mutation_in: [CREATED]
+          }) {
+            node {
+              id
+              link {
+                id
+                url
+                description
+                createdAt
+                postedBy {
+                  id
+                  name
+                }
+                votes {
+                  id
+                  user {
+                    id
+                  }
+                }
+              }
+              user {
+                id
+              }
+            }
+          }
+        }
+      `,
+      updateQuery: (previous, { subscriptionData }) => {
+        const votedLinkIndex = previous.allLinks.findIndex(link => {
+          return link.id === subscriptionData.data.Vote.node.link.id
+        })
+        const link = subscriptionData.data.Vote.node.link
+        const newAllLinks = previous.allLinks.slice()
+        newAllLinks[votedLinkIndex] = link
+        const result = {
+          ...previous,
+          allLinks: newAllLinks
+        }
+        return result
+      }
+    })
   }
 
   _updateCacheAfterVote = (store, createVote, linkId) => {
