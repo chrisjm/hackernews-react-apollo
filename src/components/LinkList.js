@@ -161,16 +161,20 @@ class LinkList extends Component {
   _updateCacheAfterVote = (store, createVote, linkId) => {
     const isNewPage = this.props.location.pathname.includes('new')
     const page = parseInt(this.props.match.params.page, 10)
-    const skip = isNewPage ? (page - 1) * LINKS_PER_PAGE : 0
-    const first = isNewPage ? LINKS_PER_PAGE : 100
+    const offset = isNewPage ? (page - 1) * LINKS_PER_PAGE : 0
+    const limit = isNewPage ? LINKS_PER_PAGE : 100
     const orderBy = isNewPage ? 'createdAt_DESC' : null
-    const data = store.readQuery({ query: ALL_LINKS_QUERY, variables: {first, skip, orderBy} })
+    const data = store.readQuery({
+      query: ALL_LINKS_QUERY,
+      variables: { limit, offset, orderBy }
+    })
     const votedLink = data.allLinks.find(link => link.id === linkId)
     votedLink.votes = createVote.link.votes
     store.writeQuery({ query: ALL_LINKS_QUERY, data })
   }
 }
 
+// NB: In Graphcool, $first = limit; $skip = offset
 export const ALL_LINKS_QUERY = gql`
   query AllLinksQuery($first: Int, $skip: Int, $orderBy: LinkOrderBy) {
     allLinks(first: $first, skip: $skip, orderBy: $orderBy) {
@@ -200,11 +204,11 @@ export default graphql(ALL_LINKS_QUERY, {
   options: (ownProps) => {
     const page = parseInt(ownProps.match.params.page, 10)
     const isNewPage = ownProps.location.pathname.includes('new')
-    const skip = isNewPage ? (page - 1) * LINKS_PER_PAGE : 0
-    const first = isNewPage ? LINKS_PER_PAGE : 100
+    const offset = isNewPage ? (page - 1) * LINKS_PER_PAGE : 0
+    const limit = isNewPage ? LINKS_PER_PAGE : 100
     const orderBy = isNewPage ? 'createdAt_DESC' : null
     return {
-      variables: { first, skip, orderBy }
+      variables: { limit, offset, orderBy }
     }
   }
 })(LinkList)

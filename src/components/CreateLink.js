@@ -51,19 +51,19 @@ class CreateLink extends Component {
         postedById
       },
       update: (store, { data: { createLink } }) => {
-        const first = LINKS_PER_PAGE
-        const skip = 0
+        const limit = LINKS_PER_PAGE
+        const offset = 0
         const orderBy = 'createdAt_DESC'
         const data = store.readQuery({
           query: ALL_LINKS_QUERY,
-          variables: { first, skip, orderBy }
+          variables: { limit, offset, orderBy }
         })
         data.allLinks.splice(0,0,createLink)
         data.allLinks.pop()
         store.writeQuery({
           query: ALL_LINKS_QUERY,
           data,
-          variables: { first, skip, orderBy }
+          variables: { limit, offset, orderBy }
         })
       }
     })
