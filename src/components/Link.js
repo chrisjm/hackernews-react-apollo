@@ -12,7 +12,15 @@ class Link extends Component {
       <div className='flex mt2 items-start'>
         <div className='flex items-center'>
           <span className='gray'>{this.props.index + 1}.</span>
-          {userId && <div className='ml1 gray pointer f11' onClick={() => this._voteForLink()}>▲</div>}
+          {
+            userId &&
+            <div
+              className={'ml1 pointer f11 ' + (this._userAlreadyVoted() ? 'moon-gray' : 'gray') }
+              onClick={() => this._voteForLink()}
+            >
+              ▲
+            </div>
+          }
         </div>
         <div className='ml1'>
           <div>
@@ -26,10 +34,15 @@ class Link extends Component {
     )
   }
 
-  _voteForLink = async () => {
+  _userAlreadyVoted = () => {
     const userId = localStorage.getItem(GC_USER_ID)
     const voterIds = this.props.link.votes.map(vote => vote.user.id)
-    if (voterIds.includes(userId)) {
+    return voterIds.includes(userId)
+  }
+
+  _voteForLink = async () => {
+    const userId = localStorage.getItem(GC_USER_ID)
+    if (this._userAlreadyVoted()) {
       console.log(`User (${userId}) already voted for this link`)
       return
     }
